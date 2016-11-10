@@ -1,14 +1,23 @@
 // TODO: need a better name than 'object'. Some name that's pretty general.
 
+interface ObjectWithId {
+    id: string,
+};
+
+interface ObjectWithChildren {
+    id: string,
+    children: string[],
+};
+
 // Actions:
 //      add:        returns a new object with attrs set
 //      addChild:   returns a new object with attrs set
 //      setAttrs:   sets attrs, but only if action.payload.id === state.id
-export function object(objectType, initialState) {
+export function object<T extends ObjectWithId>(objectType: string, initialState: T) {
     let add = objectType.toUpperCase() + '_ADD';
     let addChild = objectType.toUpperCase() + '_ADD_CHILD';
     let setAttrs = objectType.toUpperCase() + '_SET_ATTRS';
-    return (state, action) => {
+    return (state: T, action: any): T => {
         if (action.type === add || action.type === addChild)
             return Object.assign({}, initialState, action.payload.attrs);
         else if (action.type === setAttrs && action.payload.id === state.id)
@@ -22,11 +31,11 @@ export function object(objectType, initialState) {
 //      add:        returns a new object with attrs set
 //      addChild:   returns a new object with attrs set
 //      setAttrs:   sets attrs, ignores id
-export function objectNoId(objectType, initialState) {
+export function objectNoId<T>(objectType: string, initialState: T) {
     let add = objectType.toUpperCase() + '_ADD';
     let addChild = objectType.toUpperCase() + '_ADD_CHILD';
     let setAttrs = objectType.toUpperCase() + '_SET_ATTRS';
-    return (state = initialState, action) => {
+    return (state = initialState, action: any): T => {
         if (action.type === add || action.type === addChild)
             return Object.assign({}, initialState, action.payload.attrs);
         else if (action.type === setAttrs)
@@ -40,10 +49,10 @@ export function objectNoId(objectType, initialState) {
 //      add:        adds a new object to array and sets attrs
 //      remove:     removes object from array
 // baseReducer should be object(objectType, ...)
-export function objectArray(objectType, baseReducer) {
+export function objectArray<T extends ObjectWithId>(objectType: string, baseReducer: (action: any, o: T) => T) {
     let add = objectType.toUpperCase() + '_ADD';
     let remove = objectType.toUpperCase() + '_REMOVE';
-    return (state = [], action) => {
+    return (state: T[] = [], action: any): T[] => {
         switch (action.type) {
             case add:
                 return [...state, baseReducer(undefined, action)];
@@ -79,11 +88,13 @@ export function objectArray(objectType, baseReducer) {
 //      addChild:   adds a new object to array and sets attrs. Also adds it to parent.
 //      remove:     removes object from array. Also removes it from any parents.
 // objectReducer should be object(objectType, ...)
-export function forest(objectType, objectReducer) {
+export function forest<T extends ObjectWithChildren>(
+    objectType: string, objectReducer: (action: any, o: T) => T
+) {
     let add = objectType.toUpperCase() + '_ADD';
     let addChild = objectType.toUpperCase() + '_ADD_CHILD';
     let remove = objectType.toUpperCase() + '_REMOVE';
-    return (state = [], action) => {
+    return (state: T[] = [], action: any) => {
         switch (action.type) {
             case add:
                 return [...state, objectReducer(undefined, action)];
@@ -110,7 +121,7 @@ export function forest(objectType, objectReducer) {
     };
 };
 
-export function getSubtreeIds(forest, rootId) {
+export function getSubtreeIds<T extends ObjectWithChildren>(forest: T[], rootId: string) {
     let ids = [rootId];
     for (let i = 0; i < ids.length; ++i) {
         let o = forest.find(o => o.id === ids[i]);
@@ -121,7 +132,9 @@ export function getSubtreeIds(forest, rootId) {
     return ids;
 }
 
-export function reduceSubtree(forest, rootId, includeRoot, reduce) {
+export function reduceSubtree<T extends ObjectWithChildren>(
+    forest: T[], rootId: string, includeRoot: boolean, reduce: (o: T) => T
+) {
     let ids = getSubtreeIds(forest, rootId);
     return forest.map(o => {
         if ((includeRoot || o.id !== rootId) && ids.includes(o.id))
@@ -131,7 +144,7 @@ export function reduceSubtree(forest, rootId, includeRoot, reduce) {
     })
 }
 
-export function getParentIds(forest, childId) {
+export function getParentIds<T extends ObjectWithChildren>(forest: T[], childId: string) {
     let ids = [childId];
     for (let i = 0; i < ids.length; ++i) {
         let o = forest.find(o => o.children.includes(ids[i]));
@@ -141,7 +154,9 @@ export function getParentIds(forest, childId) {
     return ids;
 }
 
-export function reduceParents(forest, rootId, includeRoot, reduce) {
+export function reduceParents<T extends ObjectWithChildren>(
+    forest: T[], rootId: string, includeRoot: boolean, reduce: (o: T) => T
+) {
     let ids = getParentIds(forest, rootId);
     return forest.map(o => {
         if ((includeRoot || o.id !== rootId) && ids.includes(o.id))

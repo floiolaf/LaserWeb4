@@ -1,38 +1,41 @@
 "use strict";
 
-import { getParentIds, object, objectArray } from '../reducers/object'
+import { getParentIds, object, objectArray } from '../reducers/object';
 
-const operationBase = object('operation', {
-    documents: [],
-    expanded: false,
-    type: 'Laser Engrave',
-    direction: 'Conventional',
-    laserPower: 100,
-    laserDiameter: 6.35,
-    toolDiameter: 6.35,
-    margin: 0,
-    cutWidth: 0,
-    stepOver: 0.4,
-    passDepth: 0,
-    cutDepth: 0,
-    clearance: 0,
-    plungeRate: 0,
-    cutRate: 0,
-});
+class Operation {
+    id = '';
+    documents: string[] = [];
+    expanded = false;
+    type = 'Laser Engrave';
+    direction = 'Conventional';
+    laserPower = 100;
+    laserDiameter = 6.35;
+    toolDiameter = 6.35;
+    margin = 0;
+    cutWidth = 0;
+    stepOver = 0.4;
+    passDepth = 0;
+    cutDepth = 0;
+    clearance = 0;
+    plungeRate = 0;
+    cutRate = 0;
+};
 
-export function operation(state, action) {
+const operationBase = object<Operation>('operation', new Operation());
+
+export function operation(state: Operation, action: any): Operation {
     state = operationBase(state, action);
     switch (action.type) {
         case 'OPERATION_REMOVE_DOCUMENT':
             if (action.payload.id === state.id)
-                return {...state, documents: state.documents.filter(d => d !== action.payload.document) }
+                return Object.assign({}, state, { documents: state.documents.filter(d => d !== action.payload.document) });
     }
     return state;
 }
 
-export const operations = objectArray('operation', operation);
+export const operations = objectArray<Operation>('operation', operation);
 
-export function currentOperation(state = '', action) {
+export function currentOperation(state = '', action: any): string {
     if (action.type === 'OPERATION_SET_CURRENT')
         return action.payload;
     else if (action.type === 'OPERATION_ADD')
@@ -43,7 +46,7 @@ export function currentOperation(state = '', action) {
         return state;
 }
 
-export function operationsAddDocuments(state, documents, action) {
+export function operationsAddDocuments(state: Operation[], documents: any[], action: any) {
     return state.map(operation => {
         if (operation.id !== action.payload.id)
             return operation;
@@ -51,7 +54,7 @@ export function operationsAddDocuments(state, documents, action) {
         for (let id of action.payload.documents)
             if (!combined.includes(id))
                 combined.push(id);
-        let result = [];
+        let result: string[] = [];
         for (let id of combined) {
             let ok = true;
             let parents = getParentIds(documents, id);
@@ -65,7 +68,7 @@ export function operationsAddDocuments(state, documents, action) {
     });
 }
 
-export function fixupOperations(state, documents) {
+export function fixupOperations(state: Operation[], documents: any[]): Operation[] {
     return state.map(
         operation => Object.assign(
             {},

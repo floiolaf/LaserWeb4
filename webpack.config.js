@@ -16,6 +16,9 @@ module.exports = {
         path: dist_path,
         filename: 'index.js'
     },
+    resolve: {
+        extensions: ['', '.js', '.tsx']
+    },
     module: {
         loaders: [
             {
@@ -31,6 +34,11 @@ module.exports = {
                         'transform-es2015-modules-commonjs',
                         'react-hot-loader/babel']
                 }
+            },
+            {
+                test: /\.tsx$/,
+                exclude: /node_modules/,
+                loader: 'ts-loader',
             },
             {
                 test: /\.css$/,
